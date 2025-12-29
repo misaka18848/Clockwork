@@ -24,7 +24,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Replace vs2_version with official 2.4.0
+      - name: Replace vs2_version with official vs2 version
         run: |
           sed -i 's/^vs2_version=.*/vs2_version=2.4.3/' gradle.properties
           echo "vs2_version changed"

@@ -51,7 +51,7 @@ object ClockworkConfig {
         var maxGravitronMass = 256
 
         @ConfigEntry(description = "Force multiplier for balloons. Realism is 1.0, default is 1000.0. Range: > 0.0", min = 0.0)
-        var balloonForceMult: Double = 500.0
+        var balloonForceMult: Double = 50.0
 
         @ConfigEntry(description = "Sets the gas retention efficiency of the balloon material; lower values simulate airtight rubber/synthetic, while higher values represent porous fabrics. Default 0.001.", min = 0.0, max = 1.0)
         var permeabilityConstant = 0.001
@@ -65,8 +65,14 @@ object ClockworkConfig {
         @ConfigEntry(description = "Whether or not blade controllers consume the durability of the blades inside while rotating at high speeds.")
         var bladeControllerUsesDurability = false
 
-        @ConfigEntry(description = "The substeps of blade force calculation. More steps means more \'accurate\' simulation, but also makes it significantly more performance heavy.")
-        var bladeIntegrationSteps = 10.0
+        @ConfigEntry(description = "The max size that a propeller blade can reach. Sizes higher than this will refuse to craft.")
+        var maxBladeSize = 4.0
+
+        @ConfigEntry(description = "The length of the raycast made by the Gas Nozzle when attempting to find a valid balloon ceiling.", min = 1.0)
+        var hotAirBalloonMaxRaycastDistance = 64.0
+
+        @ConfigEntry(description = "The maximum volume (in blocks) that the hot air balloon floodfill will scan when trying to determine the balloon's interior.", min = 1.0)
+        var hotAirBalloonMaxScanVolume = 100000.0
 
         @ConfigEntry(description = "Force multiplier when no rpm is given")
         var angleFollowingBaseAngleErrorMultiplier = 2.0
@@ -78,7 +84,7 @@ object ClockworkConfig {
         var angleFollowingOmegaErrorMultiplier = 10.0
 
         @ConfigEntry(min = 0.0)
-        var forceMulPerSailInPropeller = 500.0
+        var forceMulPerSailInPropeller = 5.0
 
         @ConfigEntry(min = 0.0)
         var encasedFanForceMul = 40.0
@@ -103,5 +109,26 @@ object ClockworkConfig {
 
         @ConfigEntry(description = "Air density at which the air compressor will start generating aether. Setting it to 0 or a negative number will disable helium generation")
         var airCompressorHeliumAirDensity = 0.3
+
+        @ConfigEntry(description = "Temperature for the gas heater to act like a passive heat source (campfires, dormant blaze burners). Default is 500K (baking oven)")
+        var heaterSmoulderingTemp = 500
+
+        @ConfigEntry(description = "Temperature for the gas heater to act like a heated blaze burner. Default is 1000K (ceramic firing)")
+        var heaterKindledTemp = 1000
+
+        @ConfigEntry(description = "Temperature for the gas heater to act like a superheated blaze burner. Default is 1500K (real metallurgy)")
+        var heaterSeethingTemp = 1500
+
+        @ConfigEntry(description = "Temperature for gas exhaust to trigger bulk smoking. Default is 500K (baking oven)")
+        var bulkSmokingTemp = 500
+
+        @ConfigEntry(description = "Temperature for gas exhaust to trigger bulk blasting. Default is 1000K (ceramic firing)")
+        var bulkBlastingTemp = 1000
+
+        @ConfigEntry(description = "Multiplier applied to ship mass when yeeting (left-clicking) with the survival gravitron", min = 0.0, max = 10000.0)
+        var survivalGravitronYeetForce = 1000.0
+
+        @ConfigEntry(description = "Maximum range (in blocks) the survival gravitron will interact with ships", min = 1.0, max = 1000.0)
+        var survivalGravitronMaxRange = 20.0
     }
 }

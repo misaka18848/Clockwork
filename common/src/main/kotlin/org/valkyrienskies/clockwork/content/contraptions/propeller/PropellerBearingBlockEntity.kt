@@ -14,6 +14,9 @@ import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollOp
 import com.simibubi.create.foundation.gui.AllIcons
 import com.simibubi.create.foundation.utility.ServerSpeedProvider
 import net.createmod.catnip.lang.Lang
+import net.fabricmc.api.EnvType
+import net.fabricmc.api.Environment
+import net.minecraft.client.Minecraft
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.nbt.CompoundTag
@@ -38,6 +41,7 @@ import org.valkyrienskies.clockwork.content.contraptions.propeller.data.PropData
 import org.valkyrienskies.clockwork.content.contraptions.propeller.data.PropUpdateData
 import org.valkyrienskies.clockwork.content.forces.PropellerController
 import org.valkyrienskies.clockwork.content.generic.IForceApplierBE
+import org.valkyrienskies.clockwork.util.sound.PropellerSoundInstance
 import org.valkyrienskies.mod.common.getShipObjectManagingPos
 import org.valkyrienskies.mod.common.util.toJOML
 import org.valkyrienskies.mod.common.util.toJOMLD
@@ -53,6 +57,9 @@ open class PropellerBearingBlockEntity(type: BlockEntityType<*>, pos: BlockPos, 
     override var physID: Int = -1
 
     var propellerContraption: ControlledContraptionEntity? = null
+
+    @Environment(value = EnvType.CLIENT)
+    var soundInstance: PropellerSoundInstance? = null
 
     var targetOmega = 0.0
     var currentOmega = 0.0
@@ -83,11 +90,11 @@ open class PropellerBearingBlockEntity(type: BlockEntityType<*>, pos: BlockPos, 
     lateinit var rotationDirection: ScrollOptionBehaviour<RotationDirection>
 
     override fun newCreateData(): PropCreateData {
-        return PropCreateData(worldPosition.toJOML(), blockState.getValue(BlockStateProperties.FACING).normal.toJOMLD(), angle, currentOmega, sailPositions, isInverted(), active, brass && blades.isEmpty(), blades)
+        return PropCreateData(worldPosition.toJOML(), blockState.getValue(BlockStateProperties.FACING).normal.toJOMLD(), angle, currentOmega, ArrayList(sailPositions), isInverted(), active, brass && blades.isEmpty(), ArrayList(blades))
     }
 
     override fun newUpdateData(): PropUpdateData {
-        return PropUpdateData(currentOmega, angle, isInverted(), active, blades)
+        return PropUpdateData(currentOmega, angle, isInverted(), active, ArrayList(blades))
     }
 
     fun shutDown() {
@@ -108,6 +115,7 @@ open class PropellerBearingBlockEntity(type: BlockEntityType<*>, pos: BlockPos, 
             val blocks = propellerContraption!!.contraption.blocks
             for ((key, value) in blocks) {
                 if (AllTags.AllBlockTags.WINDMILL_SAILS.matches(value.state)) {
+                    println("Found sail at ${key}")
                     sailPositions.add(key.toJOML())
                 }
             }
@@ -130,11 +138,20 @@ open class PropellerBearingBlockEntity(type: BlockEntityType<*>, pos: BlockPos, 
     }
 
     override fun tickAudio() {
-        if (starting) return
+        if (level == null || !level!!.isClientSide) return
         if (this.active && !this.stopping && this.getAngularSpeed() > 2.0) {
             val pitch = Mth.clamp((backFromAngular(this.currentOmega.absoluteValue).toFloat() / 256f) + .45f, .85f, 1f)
-            val scape = if (this.brass) ClockworkSoundScapes.AmbienceGroup.PROPELLER else ClockworkSoundScapes.AmbienceGroup.JURYRIGGED_PROPELLER
-            ClockworkSoundScapes.play(scape, this.worldPosition, pitch)
+            if (!this.brass) {
+                val scape = ClockworkSoundScapes.AmbienceGroup.RICKETY
+                ClockworkSoundScapes.play(scape, this.worldPosition, pitch)
+            }
+            val sound = if (this.brass) ClockworkSounds.PROPELLER.mainEvent else ClockworkSounds.JUNK_PROPELLER.mainEvent
+            if (sound != null) {
+                if (this.soundInstance == null || this.soundInstance!!.isStopped) {
+                    this.soundInstance = PropellerSoundInstance(this, level!!.random)
+                    Minecraft.getInstance().soundManager.play(this.soundInstance!!)
+                }
+            }
         }
     }
 
@@ -173,7 +190,7 @@ open class PropellerBearingBlockEntity(type: BlockEntityType<*>, pos: BlockPos, 
             active = !overStressed && !stalled
             updateSpinDir(currentOmega < 0)
             val lastTargetOmega = targetOmega
-            targetOmega = convertToAngular(this.getSpeed()).toDouble()
+            targetOmega = convertToAngular(this.getSpeed()).toDouble() * if (isInverted()) -1.0 else 1.0
 
             if (lastTargetOmega != targetOmega) {
                 sendData()
@@ -199,7 +216,7 @@ open class PropellerBearingBlockEntity(type: BlockEntityType<*>, pos: BlockPos, 
         if (!level!!.isClientSide && level!!.getShipObjectManagingPos(blockPos) != null) {
             val shipOn = (level as ServerLevel).getShipObjectManagingPos(blockPos)!!
             val attachment = PropellerController.getOrCreate(shipOn)!!
-            if (!brass) getBlades()
+            getBlades()
             tickData(attachment, true)
         }
 
@@ -275,7 +292,7 @@ open class PropellerBearingBlockEntity(type: BlockEntityType<*>, pos: BlockPos, 
         angle = 0.0
         currentOmega = 0.0
 
-        targetOmega = convertToAngular(this.getSpeed()).toDouble()
+        targetOmega = convertToAngular(this.getSpeed()).toDouble() * if (isInverted()) -1.0 else 1.0
 
         getBlades()
         if (brass && blades.isEmpty()) {
@@ -409,7 +426,7 @@ open class PropellerBearingBlockEntity(type: BlockEntityType<*>, pos: BlockPos, 
         }
         if (propellerContraption == null || !running) pT = 0f
 
-        //val renderedOmega = if (!isInverted()) Mth.lerp(pT.toDouble(), getAngularSpeed(), targetOmega) else Mth.lerp(pT.toDouble(), -getAngularSpeed(), -targetOmega)
+        val renderedOmega = if (!isInverted()) Mth.lerp(pT.toDouble(), getAngularSpeed(), targetOmega) else Mth.lerp(pT.toDouble(), -getAngularSpeed(), -targetOmega)
         return Mth.lerp(pT.toDouble(), angle, angle + getAngularSpeed()).toFloat()
     }
 

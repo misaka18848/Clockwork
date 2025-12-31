@@ -1,5 +1,6 @@
 package org.valkyrienskies.clockwork
 
+import org.valkyrienskies.clockwork.util.gui.DuctUnits
 import org.valkyrienskies.core.internal.config.ConfigEntry
 
 object ClockworkConfig {
@@ -16,6 +17,24 @@ object ClockworkConfig {
 
         @ConfigEntry(description = "Enable rendering particles for DuctBlock")
         var renderDuctParticles = true
+
+        @ConfigEntry(description = "Use metric prefixes for units (15000 Pa = 15 kPa)")
+        var simplifyDisplayUnits = true
+
+        @ConfigEntry(description = "Gas mass display unit")
+        var massDisplayUnit = DuctUnits.MassUnit.KILOGRAM
+
+        @ConfigEntry(description = "Duct volume display unit")
+        var volumeDisplayUnit = DuctUnits.VolumeUnit.CUBIC_METER
+
+        @ConfigEntry(description = "Temperature display unit")
+        var tempDisplayUnit = DuctUnits.TemperatureUnit.KELVIN
+
+        @ConfigEntry(description = "Pressure display unit")
+        var pressureDisplayUnit = DuctUnits.PressureUnit.PASCAL
+
+        @ConfigEntry(description = "Gas energy display unit")
+        var energyDisplayUnit = DuctUnits.EnergyUnit.JOULE
     }
 
     class Server {
@@ -74,14 +93,17 @@ object ClockworkConfig {
         @ConfigEntry(description = "The maximum volume (in blocks) that the hot air balloon floodfill will scan when trying to determine the balloon's interior.", min = 1.0)
         var hotAirBalloonMaxScanVolume = 100000.0
 
+        @ConfigEntry(description = "The maximum surface area (in blocks) that the hot air balloon floodfill will scan when trying to determine the balloon's exterior.", min = 1.0)
+        var hotAirBalloonMaxScanSurface = 10000.0
+
         @ConfigEntry(description = "Force multiplier when no rpm is given")
-        var angleFollowingBaseAngleErrorMultiplier = 2.0
+        var angleFollowingBaseAngleErrorMultiplier = 50.0
 
         @ConfigEntry()
         var angleFollowingAngleErrorMultiplier = 50.0
 
         @ConfigEntry()
-        var angleFollowingOmegaErrorMultiplier = 10.0
+        var angleFollowingOmegaErrorMultiplier = 50.0
 
         @ConfigEntry(min = 0.0)
         var forceMulPerSailInPropeller = 5.0
@@ -93,7 +115,7 @@ object ClockworkConfig {
         var wanderOreForceMultiplier = 2.0
 
         @ConfigEntry(min = 0.0)
-        var gasThrusterForceMul = 2.0
+        var gasThrusterForceMul = 20.0
 
         @ConfigEntry(min = 0.0)
         var sugarRocketBlockThrust = 10000.0

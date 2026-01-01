@@ -4,6 +4,7 @@ import dev.architectury.platform.forge.EventBuses;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -44,6 +45,7 @@ public class ClockworkModForge {
         EventBuses.registerModEventBus(MOD_ID, modEventBus);
         ClockworkMod.INSTANCE.getREGISTRATE().registerEventListeners(modEventBus);
         ClockworkSounds.register();
+        ClockworkParticles.init();
         ClockworkBlocks.register();
         ClockworkItems.register();
         ClockworkBlockEntities.register();
@@ -53,7 +55,9 @@ public class ClockworkModForge {
         ClockworkEntities.register();
         ForgeClockworkEntities.register();
 
-        ClockworkParticles.init();
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+            modEventBus.addListener((RegisterParticleProvidersEvent event) -> ClockworkParticles.initClient(event));
+        });
 
         //AllClockworkConfigs.register(modLoadingContext);
 

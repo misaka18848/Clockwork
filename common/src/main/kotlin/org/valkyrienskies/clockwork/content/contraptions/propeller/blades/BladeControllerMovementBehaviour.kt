@@ -36,10 +36,11 @@ class BladeControllerMovementBehaviour: MovementBehaviour {
         val blades = blockEntityData.getCompound("Blades")
         if (!blades.isEmpty) {
             val bladeCount = blockEntityData.getInt("BladeCount")
-            val bladeList = mutableListOf<ItemStack>()
-            for (i in 1 .. bladeCount) {
-                bladeList.add(ItemStack.of(blades.getCompound("Blade$i")))
+            val bladeList = NonNullList.withSize(8, ItemStack.EMPTY)
+            for (i in 0 until bladeCount) {
+                bladeList[i] = ItemStack.of(blades.getCompound("Blade${i+1}"))
             }
+            var currentBladeCount = bladeCount
             val rotation = context.rotation.apply(Vec3.ZERO)
             val deltaRotation = rotation.subtract(previousRotation)
             if (deltaRotation.length().absoluteValue >= 128.0 && ClockworkConfig.SERVER.bladeControllerUsesDurability && (context.contraption is PropellerContraption && !(context.contraption as PropellerContraption).brass)) {
@@ -53,17 +54,16 @@ class BladeControllerMovementBehaviour: MovementBehaviour {
                     }
                     toRemove.forEach {
                         bladeList.remove(it)
+                        currentBladeCount--
                     }
                 }
             }
-            blockEntityData.putInt("BladeCount", bladeList.size)
-            blades.remove("Blades")
-            val newBlades = CompoundTag()
-            for (i in 1 .. bladeList.size) {
-                newBlades.put("Blade$i", bladeList[i - 1].save(CompoundTag()))
-            }
-            blockEntityData.put("Blades", newBlades)
-            if (bladeList.size != bladeCount) {
+            if (currentBladeCount != bladeCount) {
+                blockEntityData.putInt("BladeCount", currentBladeCount)
+                blades.remove("Blades")
+                val newBlades = CompoundTag()
+                ContainerHelper.saveAllItems(newBlades, bladeList)
+                blockEntityData.put("Blades", newBlades)
                 blockEntityData.putBoolean("ShouldUpdatePhys", true)
             }
         }

@@ -31,6 +31,7 @@ import org.valkyrienskies.core.api.ships.ShipPhysicsListener
 import org.valkyrienskies.core.api.util.PhysTickOnly
 import org.valkyrienskies.core.api.world.PhysLevel
 import org.valkyrienskies.core.util.pollUntilEmpty
+import org.valkyrienskies.mod.common.dimensionId
 import org.valkyrienskies.mod.common.getLoadedShipManagingPos
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.max
@@ -75,6 +76,7 @@ class BalloonController: ShipPhysicsListener {
         level: ServerLevel,
         ship: LoadedServerShip
     ) {
+        if (level.dimensionId != ship.chunkClaimDimension) return
         // Clean up balloons that should be removed
         val toRemove = mutableListOf<Int>()
         for ((id, balloon) in balloons) {
@@ -144,7 +146,7 @@ class BalloonController: ShipPhysicsListener {
                 balloon.shouldRemove = true
             }
         }
-        val tickableBloons = balloons.filter { !it.value.shouldRemove && !it.value.shouldReScan }
+        val tickableBloons = balloons.filter { !it.value.shouldRemove }
         val shouldApplyForces = ArrayList<Int>()
         for ((id, balloon) in tickableBloons) {
             val result = balloon.tick(level, ship)

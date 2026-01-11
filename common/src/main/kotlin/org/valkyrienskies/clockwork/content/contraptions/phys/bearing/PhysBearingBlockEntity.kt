@@ -97,7 +97,8 @@ class PhysBearingBlockEntity(type: BlockEntityType<*>?, pos: BlockPos?, state: B
     var shiptraptionID = NO_SHIPTRAPTION_ID
         private set
     var targetAngle = 0f
-        private set
+        get() = field
+        private set(idk) {field = idk}
     var disassembleWhenPossible = false
         private set
     @Volatile var joint : VSJoint? = null
@@ -195,7 +196,7 @@ class PhysBearingBlockEntity(type: BlockEntityType<*>?, pos: BlockPos?, state: B
             curAngle = targetAngle
         }
 
-        var angle = lastAngle + (targetAngle - lastAngle) * ((pTick+1) / 3.0)
+        var angle = Math.toRadians(lastAngle + (targetAngle - lastAngle) * ((pTick+1) / 3.0))
         if (aligning) { angle = 0.0 }
 
         physLevel as VsiPhysLevel
@@ -204,7 +205,15 @@ class PhysBearingBlockEntity(type: BlockEntityType<*>?, pos: BlockPos?, state: B
             sDir2 = bearingAxis
         }
 
-        val fRot2 = Quaterniond(AxisAngle4d(Math.toRadians(angle), sDir1)).mul(getHingeRotation(sDir1!!))
+        //AxisAngle4d clamps angle, so when going from 359 to 0 degrees quat jumps from -0.999 w to 0.999 w or smth like that
+        // which causes krunch to incorrectly interpolate, so i just extend angle range to [0, 720) and manually do this shit
+        val s = sin(angle * 0.5)
+        val fRot2 = Quaterniond(
+            sDir1!!.x() * s,
+            sDir1!!.y() * s,
+            sDir1!!.z() * s,
+            org.joml.Math.cosFromSin(s, angle * 0.5)
+        ).mul(getHingeRotation(sDir1!!))
         val fRot1 = getHingeRotation(sDir2!!)
 
         this.joint = VSFixedJoint(
@@ -301,6 +310,8 @@ class PhysBearingBlockEntity(type: BlockEntityType<*>?, pos: BlockPos?, state: B
         open = tag.getBoolean(ClockworkConstants.Nbt.OPEN)
         isRunning = tag.getBoolean(ClockworkConstants.Nbt.RUNNING)
         targetAngle = tag.getFloat(ClockworkConstants.Nbt.ANGLE)
+        lastAngle = targetAngle
+        curAngle = targetAngle
         lastException = AssemblyException.read(tag)
         if (tag.contains(ClockworkConstants.Nbt.SHIPTRAPTION_ID)) {
             shiptraptionID = tag.getLong(ClockworkConstants.Nbt.SHIPTRAPTION_ID)
@@ -459,7 +470,6 @@ class PhysBearingBlockEntity(type: BlockEntityType<*>?, pos: BlockPos?, state: B
             this.jointID = id
 
             isRunning = true
-            targetAngle = 0f
             lastStateChanged = ticks
         }
     }
@@ -774,18 +784,18 @@ class PhysBearingBlockEntity(type: BlockEntityType<*>?, pos: BlockPos?, state: B
             val newAngle = targetAngle + angularSpeed - diff
             //this is stupid
             lastAngle = when {
-                newAngle >= 360f -> lastAngle - 360f
-                newAngle < 0f -> lastAngle + 360f
+                newAngle >= 360f * 2 -> lastAngle - 360f * 2
+                newAngle < 0f -> lastAngle + 360f * 2
                 else -> lastAngle
             }
             curAngle = when {
-                newAngle >= 360f -> curAngle - 360f
-                newAngle < 0f -> curAngle + 360f
+                newAngle >= 360f * 2 -> curAngle - 360f * 2
+                newAngle < 0f -> curAngle + 360f * 2
                 else -> curAngle
             }
             targetAngle = when {
-                newAngle >= 360f -> newAngle - 360f
-                newAngle < 0f -> newAngle + 360f
+                newAngle >= 360f * 2 -> newAngle - 360f * 2
+                newAngle < 0f -> newAngle + 360f * 2
                 else -> newAngle
             }
         }

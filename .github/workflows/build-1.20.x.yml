@@ -26,7 +26,7 @@ jobs:
 
       - name: Replace vs2_version with official vs2 version
         run: |
-          sed -i 's/^vs2_version=.*/vs2_version=2.4.6/' gradle.properties
+          sed -i 's/^vs2_version=.*/vs2_version=2.4.7/' gradle.properties
           echo "vs2_version changed"
 
       - name: Grant execute permission for Gradle

@@ -19,11 +19,13 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.block.state.properties.BlockStateProperties
+import org.valkyrienskies.clockwork.ClockworkBlockEntities
+import org.valkyrienskies.clockwork.ClockworkConfig
 import org.valkyrienskies.clockwork.ClockworkMod
 import org.valkyrienskies.clockwork.content.contraptions.flap.contraption.FlapContraption
 import org.valkyrienskies.core.impl.shadow.re
 
-open class FlapBearingBlockEntity(type: BlockEntityType<*>?, pos: BlockPos, state: BlockState, val maxSize: Long = 16) :
+open class FlapBearingBlockEntity(type: BlockEntityType<*>?, pos: BlockPos, state: BlockState) :
     KineticBlockEntity(type, pos, state), IBearingBlockEntity, IDisplayAssemblyExceptions {
 
     var isRunning = false
@@ -39,6 +41,11 @@ open class FlapBearingBlockEntity(type: BlockEntityType<*>?, pos: BlockPos, stat
     private var lastPower: Int = 0
     private var currentPower: Int = 0
 
+    /**
+     * Only used by the CC peripheral so that it can set the angle manually
+     * without it resetting / being meddled with by redstone
+     */
+    var isLocked = false
 
     val angularSpeed: Double
         get() {
@@ -62,6 +69,9 @@ open class FlapBearingBlockEntity(type: BlockEntityType<*>?, pos: BlockPos, stat
             assemble()
         }
 
+        // Don't update from redstone if we're locked
+        if (isLocked) return
+
         lastPower = currentPower
         currentPower = getPower()
 
@@ -78,6 +88,7 @@ open class FlapBearingBlockEntity(type: BlockEntityType<*>?, pos: BlockPos, stat
         bearingAngle.setValue(tag.getFloat("BearingAngle").toDouble())
         bearingAngle.chase(tag.getFloat("TargetAngle").toDouble(), tag.getDouble("AngularSpeed"), chaser)
         isRunning = tag.getBoolean("IsRunning")
+        isLocked = tag.getBoolean("IsLocked")
 
         lastException = AssemblyException.read(tag)
 
@@ -89,6 +100,7 @@ open class FlapBearingBlockEntity(type: BlockEntityType<*>?, pos: BlockPos, stat
         tag.putFloat("TargetAngle",bearingAngle.chaseTarget)
         tag.putBoolean("IsRunning",isRunning)
         tag.putDouble("AngularSpeed",angularSpeed)
+        tag.putBoolean("IsLocked", isLocked)
 
         AssemblyException.write(tag,lastAssemblyException)
     }
@@ -135,8 +147,8 @@ open class FlapBearingBlockEntity(type: BlockEntityType<*>?, pos: BlockPos, stat
 
         if (contraption == null) return
         if (contraption.blocks.isEmpty()) return
-        if (contraption.blocks.size > maxSize && maxSize != -1L) {
-            lastException = AssemblyException.structureTooLarge()
+        if (contraption.blocks.size > getMaxSize() && getMaxSize() != -1) {
+            lastException = AssemblyException("structureTooLarge", getMaxSize())
             return sendData()
         }
         val anchor = worldPosition.relative(direction)
@@ -238,5 +250,9 @@ open class FlapBearingBlockEntity(type: BlockEntityType<*>?, pos: BlockPos, stat
 
     override fun getLastAssemblyException(): AssemblyException? {
         return lastException
+    }
+
+    open fun getMaxSize(): Int {
+        return ClockworkConfig.SERVER.flapBearingMaxSize
     }
 }

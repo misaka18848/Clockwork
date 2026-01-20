@@ -82,6 +82,9 @@ object ClockworkConfig {
         @ConfigEntry(description = "Force multiplier for balloons. Realism is 1.0, default is 1000.0. Range: > 0.0", min = 0.0)
         var balloonForceMult: Double = 50.0
 
+        @ConfigEntry(description = "Speed multiplier for the gas nozzle pointer, default is 0.5. Range: > 0.0", min = 0.0)
+        var gasNozzleSensitivity = 0.5
+
         @ConfigEntry(description = "Sets the gas retention efficiency of the balloon material; lower values simulate airtight rubber/synthetic, while higher values represent porous fabrics. Default 0.001.", min = 0.0, max = 1.0)
         var permeabilityConstant = 0.01
 
@@ -168,5 +171,14 @@ object ClockworkConfig {
 
         @ConfigEntry(description = "The density mult of wanderlite ore in meteors", min = 0.0)
         val meteor_density = 0.0
+
+        @ConfigEntry(description = "Maximum amount of blocks a flap bearing can assemble", min = 0.0, max = Int.MAX_VALUE.toDouble())
+        var flapBearingMaxSize = 16
+
+        @ConfigEntry(description = "Maximum amount of blocks a smart flap bearing can assemble", min = 0.0, max = Int.MAX_VALUE.toDouble())
+        var smartFlapBearingMaxSize = 24
+
+        @ConfigEntry(description = "Whether the (smart) flap bearing peripheral can use setAngle without rotational power")
+        var cheatFlapBearingPeripheral = false
     }
 }

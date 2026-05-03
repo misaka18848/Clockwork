@@ -34,11 +34,11 @@ abstract class KNodeKineticBlockEntity(typeIn: BlockEntityType<*>, pos: BlockPos
         } else if (this.dataToLoad != null) {
             val nodeBlock: INodeBlock? = this.level!!.getBlockState(this.blockPos).block as? INodeBlock
             nodeBlock?.nodePlace(this.blockState, this.level!!, this.blockPos, Blocks.AIR.defaultBlockState(), false)
-            ClockworkMod.getKelvin().markLoaded(this.getDuctNodePosition())
+            ClockworkMod.getKelvin(level).markLoaded(this.getDuctNodePosition())
             return
         }
 
-        if (this.level != null && ClockworkMod.getKelvin().getNodeAt(this.getDuctNodePosition()) != null) {
+        if (this.level != null && ClockworkMod.getKelvin(level).getNodeAt(this.getDuctNodePosition()) != null) {
 //            val pressureDiff = abs(ClockworkMod.getKelvin().getPressureAt(this.getDuctNodePosition()) - (ClockworkMod.getKelvin().nodeInfo[this.getDuctNodePosition()]?.previousPressure ?: 0.0))
 //            if (pressureDiff > 0.01) {
                 this.setChanged()
@@ -51,11 +51,11 @@ abstract class KNodeKineticBlockEntity(typeIn: BlockEntityType<*>, pos: BlockPos
     }
 
     override fun setLazyTickRate(slowTickRate: Int) {
-        super.setLazyTickRate(ClockworkConfig.SERVER.kelvinNodeBlockEntityLazyTickRate)
+        super.setLazyTickRate(ClockworkConfig.KELVIN.kelvinNodeBlockEntityLazyTickRate)
     }
 
     override fun write(tag: CompoundTag, clientPacket: Boolean) {
-        if (ensureNodeExists() && !clientPacket) {
+        if (!clientPacket && ensureNodeExists()) {
             saveData(tag, this.getDuctNodePosition(), clientPacket)
         }
         super.write(tag, clientPacket)
@@ -63,7 +63,7 @@ abstract class KNodeKineticBlockEntity(typeIn: BlockEntityType<*>, pos: BlockPos
 
     override fun read(tag: CompoundTag, clientPacket: Boolean) {
         super.read(tag, clientPacket)
-        if (ensureNodeExists() && !clientPacket) {
+        if (!clientPacket && ensureNodeExists()) {
             //if (!clientPacket) println("node exists, loading")
             loadData(tag, this.getDuctNodePosition(), clientPacket)
         } else {
@@ -90,5 +90,7 @@ abstract class KNodeKineticBlockEntity(typeIn: BlockEntityType<*>, pos: BlockPos
     override fun remove() {
         if (level?.isClientSide == true)
             ClockworkModClient.getKelvin().removeNode(getDuctNodePosition())
+
+        super.remove()
     }
 }

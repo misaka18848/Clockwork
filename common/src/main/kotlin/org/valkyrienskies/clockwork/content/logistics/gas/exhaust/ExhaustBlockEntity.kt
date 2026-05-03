@@ -4,11 +4,11 @@ import com.simibubi.create.content.kinetics.fan.AirCurrent
 import com.simibubi.create.content.kinetics.fan.IAirCurrentSource
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import com.simibubi.create.infrastructure.config.AllConfigs
+import net.createmod.ponder.api.level.PonderLevel
 import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.util.Mth
-import net.minecraft.util.RandomSource
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockState
@@ -24,13 +24,12 @@ import org.valkyrienskies.core.api.world.properties.DimensionId
 import org.valkyrienskies.kelvin.KelvinMod
 import org.valkyrienskies.mod.api.BlockEntityPhysicsListener
 import org.valkyrienskies.mod.common.util.toJOMLD
-import kotlin.math.floor
 import kotlin.math.min
 import kotlin.math.pow
 
 class ExhaustBlockEntity(type: BlockEntityType<*>, pos: BlockPos, state: BlockState) : KNodeBlockEntity(type, pos, state),
     IAirCurrentSource, BlockEntityPhysicsListener {
-    val MASS_PER_EXHAUST = 0.001
+    val MASS_PER_EXHAUST = 0.01
 
     val facing: Direction = state.getValue(BlockStateProperties.FACING)
 
@@ -60,15 +59,13 @@ class ExhaustBlockEntity(type: BlockEntityType<*>, pos: BlockPos, state: BlockSt
         return
     }
 
-    fun randomPos(deviation: Double, random: RandomSource): Double {
-        return (0.5-deviation/2.0)+random.nextDouble()*deviation
-    }
-
     override fun tick() {
         super.tick()
 
         // Kelvin behavior
-        val network = if (level?.isClientSide != true) {
+        val network = if (level is PonderLevel) {
+            ClockworkMod.getKelvin(level)
+        } else if (level?.isClientSide != true) {
             ClockworkMod.getKelvin()
         } else {
             ClockworkModClient.getKelvin()
@@ -82,14 +79,18 @@ class ExhaustBlockEntity(type: BlockEntityType<*>, pos: BlockPos, state: BlockSt
             val state = level!!.getBlockState(blockPos)
             if (state.block !is ExhaustBlock) return
             val facing = state.getValue(BlockStateProperties.FACING)
-            val random = level!!.random
 
-            for (i in 1..floor(gasses.values.sum()/MASS_PER_EXHAUST).toInt()) {
-                KelvinParticleHelper.spawnParticleWithRatio(level as ClientLevel, getDuctNodePosition(),
-                    blockPos.toJOMLD().add(randomPos(0.3, random), randomPos(0.3, random), randomPos(0.3, random)),
-                    facing.normal.toJOMLD().mul(Mth.clamp(0.0025 * pressure.pow(0.4), 0.1,5.0 )))
-            }
-            //println("PARTICLE PARTER ${floor(gasses.values.sum()/MASS_PER_EXHAUST).toInt()}")
+            val particleCount = gasses.values.sum() / MASS_PER_EXHAUST
+            val speed = Mth.clamp(0.001 * pressure.pow(0.4), 0.03, 1.0)
+            KelvinParticleHelper.spawnJetWithRatio(
+                level as ClientLevel,
+                getDuctNodePosition(),
+                blockPos.toJOMLD().add(0.5, 0.5, 0.5),
+                facing,
+                speed,
+                particleCount,
+                outwardOffset = 0.3
+            )
         } else {
             for ((gas, value) in gasses) {
                 network.removeGas(getDuctNodePosition(), gas, value)

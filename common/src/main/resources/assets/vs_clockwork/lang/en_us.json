@@ -136,6 +136,7 @@
 
   "vs_clockwork.logistics.firstFrequency": "Delivery Frequency",
   "vs_clockwork.logistics.filter.click_to_set": "Click with an item to set.",
+  "vs_clockwork.logistics.filter.click_to_replace": "Click with an item to replace.",
 
   "vs_clockwork.contraptions.propeller.rotation_direction": "Rotation Direction",
   "vs_clockwork.contraptions.resistor.resist_direction": "Resistor Resist Direction",
@@ -421,6 +422,11 @@
   "vs_clockwork.unit.mass.gram": "g",
   "vs_clockwork.unit.mass.imperial_ton": "ton",
   "vs_clockwork.unit.mass.ounce": "oz",
+
+  "vs_clockwork.gui.delivery_cannon.info.obstructed.title": "Cannon cannot activate",
+  "vs_clockwork.gui.delivery_cannon.info.obstructed": "It appears the destination chute is full. The cannon cannot fire until the chute is emptied.",
+  "vs_clockwork.gui.delivery_chute.info.obstructed.title": "Chute contains excess items",
+  "vs_clockwork.gui.delivery_chute.info.obstructed": "The storage below this delivery chute is full.",
 
   "vs_clockwork.gui.air_compressor.info.title": "Compressor Info:",
   "vs_clockwork.gui.air_compressor.info.obstructed.title": "Obstructed",

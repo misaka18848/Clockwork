@@ -87,7 +87,7 @@ dependencies {
     api "org.jetbrains.kotlin:kotlin-reflect:2.0.0"
 
     // Create - dependencies are added transitively
-    modImplementation("com.simibubi.create:create-fabric-${minecraft_version}:${create_fabric_version}") {
+    modImplementation("com.simibubi.create:create-fabric:${create_fabric_version}") {
         exclude group: 'com.github.AlphaMode', module: 'fakeconfigtoml'
         exclude group: "me.jellysquid"
         exclude module: "sodium"
@@ -111,6 +111,8 @@ dependencies {
     modImplementation("me.shedaniel.cloth:cloth-config-fabric:11.1.136") {
         exclude(group: "net.fabricmc.fabric-api")
     }
+
+    modCompileOnlyApi("mezz.jei:jei-${minecraft_version}-common-api:${jei_version_fabric}")
 
     modCompileOnly("cc.tweaked:cc-tweaked-${minecraft_version}-fabric-api:${cc_version}")
     //modRuntimeOnly("cc.tweaked:cc-tweaked-${minecraft_version}-fabric:${cc_version}")
@@ -168,6 +170,7 @@ components.java {
         skip()
     }
 }
+
 
 publishing {
     publications {
